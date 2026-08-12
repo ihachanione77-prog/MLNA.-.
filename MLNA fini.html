@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Will You Be My Valentine?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PALETTE + TOKENS
+   ============================================================ */
+:root{
+  --crimson:#c02058;
+  --crimson-dark:#8f0f45;
+  --pink:#ff2e88;
+  --pink-soft:#ff8ec4;
+  --ice:#bfe6f5;
+  --ice-ink:#2a5d78;
+  --ink:#3a0d24;
+  --notch:8px;
+  --outline:
+     3px 0 0 #fff, -3px 0 0 #fff, 0 3px 0 #fff, 0 -3px 0 #fff,
+     3px 3px 0 #fff, -3px 3px 0 #fff, 3px -3px 0 #fff, -3px -3px 0 #fff,
+     0 7px 0 rgba(143,15,69,.22);
+  --clip: polygon(
+     var(--notch) 0, calc(100% - var(--notch)) 0,
+     100% var(--notch), 100% calc(100% - var(--notch)),
+     calc(100% - var(--notch)) 100%, var(--notch) 100%,
+     0 calc(100% - var(--notch)), 0 var(--notch));
+}
+ 
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:'Press Start 2P', ui-monospace, 'Courier New', monospace;
+  color:var(--ink);
+  background:#e79fe4;
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-font-smoothing:none;
+}
+ 
+/* Fond pixel dessiné sur un canvas basse résolution puis agrandi */
+#bg{
+  position:fixed; inset:0; width:100%; height:100%;
+  image-rendering:pixelated; image-rendering:crisp-edges;
+  z-index:0;
+}
+ 
+#app{
+  position:relative; z-index:2;
+  min-height:100dvh;
+  display:grid; place-items:center;
+  padding:26px 14px 44px;
+}
+ 
+/* ============================================================
+   ÉCRANS
+   ============================================================ */
+.screen{display:none; width:100%; max-width:430px; text-align:center}
+.screen.is-active{
+  display:flex; flex-direction:column; align-items:center;
+  animation:screenIn .38s steps(5) both;
+}
+@keyframes screenIn{
+  from{opacity:0; transform:translateY(14px) scale(.96)}
+  to{opacity:1; transform:none}
+}
+ 
+/* ============================================================
+   CADRE PIXEL + CHAT
+   ============================================================ */
+.frame{
+  width:150px; padding:6px; background:var(--crimson);
+  clip-path:var(--clip);
+  filter:drop-shadow(0 6px 0 rgba(143,15,69,.35));
+  animation:bob 3s steps(6) infinite;
+}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.frame-2{padding:5px; background:#fff; clip-path:var(--clip)}
+.frame-3{
+  background:var(--frame-bg,#170a12);
+  padding:8px; clip-path:var(--clip);
+  display:grid; place-items:center;
+}
+.frame-3 svg{display:block; width:100%; height:auto}
+.frame.light{background:#f3fbff}
+.frame.light .frame-3{--frame-bg:#dff2fb}
+.bubble{
+  font-size:7px; color:#a53a7a; margin:0 0 2px;
+  letter-spacing:.5px;
+}
+ 
+/* Chat SVG */
+.fur{fill:#fdfeff; stroke:#c3d3e4; stroke-width:.9; stroke-linejoin:round}
+.fur.brown{fill:#b98a6a; stroke:#8e6349}
+.eye{fill:#2c2230}
+.line{fill:none; stroke:#2c2230; stroke-width:1.6; stroke-linecap:round}
+.blush{fill:#ffa9c9; opacity:.85}
+.tear{fill:#8fd4ef}
+ 
+/* ============================================================
+   TYPOGRAPHIE
+   ============================================================ */
+.title{
+  font-size:clamp(19px,7.4vw,30px);
+  line-height:1.5; letter-spacing:1px;
+  color:var(--crimson);
+  text-shadow:var(--outline);
+  margin:20px 6px 6px;
+}
+.title.small{font-size:clamp(16px,5.6vw,24px)}
+.sub{
+  display:inline-block; margin:8px 0 0;
+  font-size:9px; line-height:1.9; letter-spacing:.5px;
+  color:#8a1348; background:rgba(255,255,255,.55);
+  padding:5px 8px;
+}
+ 
+/* ============================================================
+   BOUTONS PIXEL
+   ============================================================ */
+.btn{
+  --fill:var(--pink); --fg:#fff; --press:0px;
+  position:relative; display:inline-block;
+  border:0; padding:4px; margin:0;
+  background:#fff; cursor:pointer;
+  font-family:inherit;
+  clip-path:var(--clip);
+  filter:drop-shadow(0 5px 0 rgba(143,15,69,.5));
+  transform:translateY(var(--press));
+  transition:filter .08s steps(2), transform .08s steps(2);
+}
+.btn>span{
+  display:block; padding:15px 20px;
+  background:var(--fill); color:var(--fg);
+  font-size:13px; letter-spacing:2px; line-height:1.4;
+  clip-path:var(--clip);
+}
+.btn:active{--press:4px; filter:drop-shadow(0 1px 0 rgba(143,15,69,.5))}
+.btn:focus-visible{outline:3px solid #fff; outline-offset:4px}
+.btn[disabled]{opacity:.45; cursor:not-allowed; filter:none}
+ 
+.btn.ghost{background:var(--pink-soft); --fill:#fff; --fg:#e0357f}
+.btn.ghost>span{padding:11px 18px; font-size:11px}
+.btn.ice{background:#79c3de; --fill:var(--ice); --fg:var(--ice-ink)}
+.btn.wide>span{padding:15px 26px}
+ 
+/* ============================================================
+   ÉCRAN 1 : LA QUESTION
+   ============================================================ */
+.choice{position:relative; width:100%; height:250px; margin-top:6px}
+#yesWrap{
+  position:absolute; left:40%; top:46%;
+  transform:translate(-50%,-50%) scale(var(--s,1));
+  transition:transform .3s cubic-bezier(.2,1.7,.4,1);
+  z-index:3;
+}
+#yesWrap .btn>span{font-size:22px; padding:18px 30px; letter-spacing:4px}
+#noWrap{
+  position:absolute; left:76%; top:52%;
+  transform:translate(-50%,-50%) scale(var(--sn,1));
+  transition:left .16s steps(3), top .16s steps(3), transform .2s steps(3);
+  z-index:2; width:max-content;
+}
+.taunt{
+  margin:10px 0 0; font-size:8px; letter-spacing:.5px;
+  color:var(--crimson); text-shadow:1px 1px 0 #fff, -1px -1px 0 #fff;
+  min-height:10px;
+}
+.spark{
+  position:absolute; right:-4px; bottom:2px;
+  width:16px; height:16px; pointer-events:none;
+}
+ 
+/* ============================================================
+   ÉCRAN 3 : LA DATE
+   ============================================================ */
+.dateBox{
+  margin-top:18px; padding:5px; background:var(--crimson);
+  clip-path:var(--clip);
+  filter:drop-shadow(0 5px 0 rgba(143,15,69,.4));
+}
+.dateBox input{
+  font-family:inherit; font-size:13px; letter-spacing:1px;
+  color:var(--crimson); background:#f4fbff;
+  border:0; padding:14px 12px; width:min(76vw,250px);
+  text-align:center; clip-path:var(--clip);
+  color-scheme:light;
+}
+.dateBox input::-webkit-calendar-picker-indicator{cursor:pointer}
+ 
+/* ============================================================
+   ÉCRAN 4 : L'ACTIVITÉ
+   ============================================================ */
+.options{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  width:100%; max-width:380px; margin:18px 0 4px;
+}
+.opt{
+  font-family:inherit; font-size:8.5px; line-height:1.6; letter-spacing:.5px;
+  padding:16px 6px; cursor:pointer;
+  background:#f2fbfb; color:#3c2340;
+  border:4px solid var(--crimson);
+  box-shadow:0 5px 0 rgba(143,15,69,.4);
+  transition:transform .08s steps(2), box-shadow .08s steps(2);
+}
+.opt:active{transform:translateY(4px); box-shadow:0 1px 0 rgba(143,15,69,.4)}
+.opt.is-picked{background:var(--pink); color:#fff; border-color:var(--crimson-dark)}
+.opt:focus-visible{outline:3px solid #fff; outline-offset:3px}
+ 
+/* ============================================================
+   ÉCRAN 5 : LE TICKET
+   ============================================================ */
+.ticket{
+  width:100%; max-width:360px; margin:18px 0 6px;
+  background:#fff7fc; padding:6px;
+  clip-path:var(--clip);
+  filter:drop-shadow(0 6px 0 rgba(143,15,69,.4));
+}
+.ticket-in{border:3px dashed var(--pink-soft); padding:16px 14px}
+.row{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:10px; padding:9px 0; border-bottom:2px dotted #f0b7d8;
+  font-size:9px; line-height:1.7; text-align:left;
+}
+.row:last-child{border-bottom:0}
+.row b{color:var(--pink); letter-spacing:1px}
+.row span{color:var(--ink); text-align:right}
+.mini{margin-top:14px; font-size:8px; color:#a3457c; letter-spacing:.5px}
+ 
+.stack{display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:16px}
+ 
+/* ============================================================
+   CŒURS QUI TOMBENT
+   ============================================================ */
+#rain{position:fixed; inset:0; pointer-events:none; z-index:5; overflow:hidden}
+.drop{position:absolute; top:-40px; animation:fall linear forwards}
+@keyframes fall{
+  to{transform:translateY(112vh) rotate(var(--rot,20deg))}
+}
+.float{position:absolute; opacity:.85; animation:floaty 4s steps(8) infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+ 
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important; transition-duration:.01ms !important}
+}
+@media (max-width:360px){
+  #yesWrap .btn>span{font-size:18px; padding:15px 22px}
+  .choice{height:220px}
+}
+</style>
+</head>
+<body>
+ 
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="rain" aria-hidden="true"></div>
+ 
+<main id="app">
+ 
+  <!-- ============ 1. LA QUESTION ============ -->
+  <section class="screen is-active" id="screen-ask">
+    <div class="frame"><div class="frame-2"><div class="frame-3" id="catAsk"></div></div></div>
+    <h1 class="title" id="qText">Will you go out with me?</h1>
+    <div class="choice" id="choice">
+      <div id="yesWrap">
+        <button class="btn" id="btnYes"><span>YES</span></button>
+      </div>
+      <div id="noWrap">
+        <button class="btn ghost" id="btnNo"><span>No</span></button>
+        <p class="taunt" id="taunt"></p>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- ============ 2. YAY ============ -->
+  <section class="screen" id="screen-yay">
+    <div class="frame"><div class="frame-2"><div class="frame-3" id="catHug"></div></div></div>
+    <h1 class="title">VOILAAAAAAAAA!!!!!</h1>
+    <p class="sub">Après tu m'étonne guette qui je suis.</p>
+    <div class="stack">
+      <button class="btn wide" id="toDate"><span>PRESS TO CONTINUE →</span></button>
+    </div>
+  </section>
+ 
+  <!-- ============ 3. LA DATE ============ -->
+  <section class="screen" id="screen-date">
+    <div class="frame light">
+      <div class="frame-2"><div class="frame-3">
+        <p class="bubble">Maybeeeeee</p>
+        <div id="catDate"></div>
+      </div></div>
+    </div>
+    <h1 class="title">Quel date ?</h1>
+    <p class="sub">Je me libererai tkt 😉</p>
+    <div class="dateBox"><input id="dateInput" type="date" aria-label="Date of the plan"></div>
+    <div class="stack">
+      <button class="btn" id="toPlan" disabled><span>NEXT →</span></button>
+    </div>
+  </section>
+ 
+  <!-- ============ 4. L'ACTIVITÉ ============ -->
+  <section class="screen" id="screen-plan">
+    <div class="frame light">
+      <div class="frame-2"><div class="frame-3">
+        <div id="catPlan"></div>
+        <p class="bubble" style="margin:4px 0 0">let's make plans then</p>
+      </div></div>
+    </div>
+    <h1 class="title small">On fais quoi ?</h1>
+    <div class="options" id="options"></div>
+    <div class="stack">
+      <button class="btn ice" id="lockIn" disabled><span>LOCK IT IN 🔒</span></button>
+    </div>
+  </section>
+ 
+  <!-- ============ 5. LE TICKET ============ -->
+  <section class="screen" id="screen-final">
+    <div class="frame"><div class="frame-2"><div class="frame-3" id="catFinal"></div></div></div>
+    <h1 class="title">On a un date !</h1>
+    <div class="ticket">
+      <div class="ticket-in">
+        <div class="row"><b>Ou</b><span id="tWhen">—</span></div>
+        <div class="row"><b>Quoi</b><span id="tWhat">—</span></div>
+        <div class="row"><b>Qui</b><span id="tWho">—</span></div>
+      </div>
+    </div>
+    <p class="mini" id="finalNote">Mets moi un faux plan j'te balaye devant chez toi.</p>
+    <div class="stack">
+      <button class="btn ice" id="addCalendar"><span>AJOUTER AU CALENDRIER 📅</span></button>
+      <button class="btn ghost" id="copyPlan"><span>COPY THE PLAN</span></button>
+      <button class="btn ghost" id="again"><span>START OVER</span></button>
+    </div>
+  </section>
+ 
+</main>
+ 
+<script>
+/* ================================================================
+   1) CONFIGURATION
+   ================================================================ */
+const CONFIG = {
+  question : "Viens on s'organise un date ?",
+  me       : "Moi",                 
+  you      : "Toi",                
+  locale   : "fr-FR",              
+  activities : ["Un diner","Un cinéma","Starbucks +  on marche","Picnic","Aquaboulevard","C'est toi qui me fait la surprise"],
+  taunts   : ["NAAAAAAAN!","Faignon pas envie","Faignon...","Please :("],
+  maxYes   : 2.4,                  
+  sound    : true
+};
+
+// URL de votre application Web Google Apps Script
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXf10grgTpghmFn4U71_HRomclk3kME9ApDETQEIw3hz5BbZR60RUtv3c184DZmDbXiA/exec";
+ 
+/* ================================================================
+   2) FOND PIXEL (canvas basse résolution + upscale)
+   ================================================================ */
+const bg = document.getElementById('bg');
+const bx = bg.getContext('2d');
+let W = 0, H = 0, PX = 6, t = 0;
+ 
+function resizeBG(){
+  PX = innerWidth < 520 ? 5 : 7;
+  W = Math.max(40, Math.ceil(innerWidth / PX));
+  H = Math.max(60, Math.ceil(innerHeight / PX));
+  bg.width = W; bg.height = H;
+  drawBG();
+}
+ 
+function drawBG(){
+  // Ciel
+  const g = bx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.00, '#d365c2');
+  g.addColorStop(0.28, '#e79fe4');
+  g.addColorStop(0.52, '#efb6e8');
+  g.addColorStop(0.74, '#f5a3d6');
+  g.addColorStop(1.00, '#ef4fa0');
+  bx.fillStyle = g; bx.fillRect(0, 0, W, H);
+ 
+  // Damier pixel en haut
+  const lim = Math.round(H * 0.42);
+  for (let y = 0; y < lim; y += 2){
+    bx.globalAlpha = 0.11 * (1 - y / lim);
+    bx.fillStyle = '#ffffff';
+    for (let x = ((y / 2) % 2 ? 2 : 0); x < W; x += 4) bx.fillRect(x, y, 2, 2);
+  }
+  bx.globalAlpha = 1;
+ 
+  // Étincelles
+  bx.fillStyle = 'rgba(255,255,255,.75)';
+  for (let i = 0; i < 14; i++){
+    const sx = Math.round((Math.sin(i * 12.9898) * 43758.5) % W + W) % W;
+    const sy = Math.round(((Math.cos(i * 78.233) * 12345.6) % (H * .6) + H * .6)) % Math.round(H * .6);
+    if ((i + Math.floor(t / 12)) % 4) bx.fillRect(sx, sy, 1, 1);
+  }
+ 
+  // Nuages pixel
+  const drift = (t * 0.15) % (W + 60);
+  cloud(20 - drift + W * .0, H * .60, 2.2, .55);
+  cloud(W * .55 - drift * .6, H * .68, 3.0, .70);
+  cloud(W * .95 - drift * .4, H * .58, 1.8, .45);
+  cloud(W * .25 - drift * .8, H * .76, 2.6, .80);
+ 
+  hills();
+}
+ 
+function cloud(cx, cy, s, a){
+  cx = ((cx % (W + 80)) + (W + 80)) % (W + 80) - 40;
+  const rows = [[10,0],[18,1],[26,2],[30,3],[30,4]];
+  bx.globalAlpha = a;
+  bx.fillStyle = '#ffffff';
+  for (const [w, dy] of rows){
+    bx.fillRect(Math.round(cx - w * s / 2), Math.round(cy + dy * s), Math.round(w * s), Math.ceil(s));
+  }
+  bx.globalAlpha = 1;
+}
+ 
+function hills(){
+  const b1 = Math.round(H * 0.74);
+  bx.fillStyle = '#f9c4e9';
+  for (let x = 0; x < W; x++){
+    const y = Math.round(b1 + Math.sin(x / 9) * 4 + Math.sin(x / 23 + 1) * 3);
+    bx.fillRect(x, y, 1, H - y);
+  }
+  const b2 = Math.round(H * 0.86);
+  bx.fillStyle = '#fa8ed0';
+  for (let x = 0; x < W; x++){
+    const y = Math.round(b2 + Math.sin(x / 11 + 2) * 3);
+    bx.fillRect(x, y, 1, H - y);
+  }
+  const b3 = Math.round(H * 0.93);
+  bx.fillStyle = '#f2419e';
+  bx.fillRect(0, b3, W, H - b3);
+  for (let x = 0; x < W; x += 2) bx.fillRect(x, b3 - 1, 1, 1);
+  for (let x = 1; x < W; x += 4) bx.fillRect(x, b3 - 2, 1, 1);
+}
+ 
+addEventListener('resize', resizeBG);
+resizeBG();
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  setInterval(() => { t++; drawBG(); }, 110);
+}
+ 
+/* ================================================================
+   3) LE CHAT (SVG) — corps + expressions
+   ================================================================ */
+const BODY = `
+  <path class="fur" d="M15 25 L13 8 L28 17 Z"/>
+  <path class="fur" d="M49 25 L51 8 L36 17 Z"/>
+  <path class="fur" d="M48 43 q10 3 8 10 q-2 4 -5 2 q4 -6 -5 -8 Z"/>
+  <ellipse class="fur" cx="32" cy="35" rx="18" ry="16"/>
+  <ellipse class="fur" cx="27.5" cy="46.5" rx="5.6" ry="3.7"/>
+  <ellipse class="fur" cx="36.5" cy="46.5" rx="5.6" ry="3.7"/>`;
+ 
+const FACES = {
+  idle:  `<ellipse class="eye" cx="26" cy="33" rx="1.8" ry="2.2"/>
+          <ellipse class="eye" cx="38" cy="33" rx="1.8" ry="2.2"/>
+          <path class="line" d="M30 38.5 q2 2 4 0"/>`,
+  worry: `<ellipse class="eye" cx="26" cy="34" rx="1.8" ry="2.2"/>
+          <ellipse class="eye" cx="38" cy="34" rx="1.8" ry="2.2"/>
+          <path class="line" d="M22.5 29.5 l5 2"/><path class="line" d="M41.5 29.5 l-5 2"/>
+          <path class="line" d="M29.5 39.5 q2.5 -2 5 0"/>`,
+  sad:   `<path class="line" d="M22 32 q4 4.5 8 0"/><path class="line" d="M34 32 q4 4.5 8 0"/>
+          <path class="line" d="M29.5 40 q2.5 -2 5 0"/>`,
+  cry:   `<path class="line" d="M22 32 q4 4.5 8 0"/><path class="line" d="M34 32 q4 4.5 8 0"/>
+          <path class="line" d="M29.5 40 q2.5 -2 5 0"/>
+          <ellipse class="tear" cx="24" cy="39" rx="1.6" ry="2.4"/>
+          <ellipse class="tear" cx="40" cy="39" rx="1.6" ry="2.4"/>`,
+  happy: `<path class="line" d="M22 34.5 q4 -5 8 0"/><path class="line" d="M34 34.5 q4 -5 8 0"/>
+          <path class="line" d="M29 38.5 q3 3 6 0"/>
+          <ellipse class="blush" cx="21.5" cy="38" rx="3.2" ry="2"/>
+          <ellipse class="blush" cx="42.5" cy="38" rx="3.2" ry="2"/>`,
+  shy:   `<path class="line" d="M22 33.5 q4 -4 8 0"/><path class="line" d="M34 33.5 q4 -4 8 0"/>
+          <path class="line" d="M27 44 q5 -3 10 0"/>
+          <ellipse class="blush" cx="21.5" cy="37.5" rx="3.2" ry="2"/>
+          <ellipse class="blush" cx="42.5" cy="37.5" rx="3.2" ry="2"/>`
+};
+ 
+function cat(mood){
+  return `<svg viewBox="0 0 64 60" width="112" role="img" aria-label="cute cat">
+            ${BODY}${FACES[mood] || FACES.idle}
+          </svg>`;
+}
+ 
+function hug(){
+  return `<svg viewBox="0 0 92 60" width="126" role="img" aria-label="two cats hugging">
+    ${pixHeartSVG(46, 4, 2, '#ff4b93')}
+    <g transform="translate(6,4) scale(.9)">
+      <path class="fur brown" d="M15 25 L13 9 L28 17 Z"/><path class="fur brown" d="M49 25 L51 9 L36 17 Z"/>
+      <ellipse class="fur brown" cx="32" cy="35" rx="18" ry="16"/>
+      <path class="line" d="M24 33.5 q3.5 -4 7 0"/>
+      <ellipse class="blush" cx="21" cy="38" rx="3" ry="2"/>
+    </g>
+    <g transform="translate(38,6) scale(.85)">
+      <path class="fur" d="M15 25 L13 9 L28 17 Z"/><path class="fur" d="M49 25 L51 9 L36 17 Z"/>
+      <ellipse class="fur" cx="32" cy="35" rx="18" ry="16"/>
+      <path class="line" d="M36 33 l4 3 l-4 3"/>
+      <ellipse class="blush" cx="44" cy="38" rx="3" ry="2"/>
+    </g>
+  </svg>`;
+}
+ 
+const HEART = [
+  "0110110",
+  "1111111",
+  "1111111",
+  "0111110",
+  "0011100",
+  "0001000"
+];
+function pixHeartSVG(x, y, s, color){
+  let r = '';
+  HEART.forEach((row, j) => [...row].forEach((c, i) => {
+    if (c === '1') r += `<rect x="${x + i * s - 3.5 * s}" y="${y + j * s}" width="${s}" height="${s}" fill="${color}"/>`;
+  }));
+  return r;
+}
+function heartEl(color, size){
+  const s = size / 7;
+  const svg = `<svg width="${size}" height="${size * 6 / 7}" viewBox="0 0 ${size} ${size * 6 / 7}"
+                shape-rendering="crispEdges">${pixHeartSVG(size / 2, 0, s, color)}</svg>`;
+  const d = document.createElement('div');
+  d.innerHTML = svg;
+  return d.firstElementChild;
+}
+ 
+document.getElementById('catAsk').innerHTML   = cat('idle');
+document.getElementById('catHug').innerHTML   = hug();
+document.getElementById('catDate').innerHTML  = cat('shy');
+document.getElementById('catPlan').innerHTML  = cat('happy');
+document.getElementById('catFinal').innerHTML = hug();
+ 
+/* ================================================================
+   4) SON (bips 8-bit)
+   ================================================================ */
+let actx = null;
+function blip(freq = 660, dur = .08, vol = .05, type = 'square'){
+  if (!CONFIG.sound) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + dur);
+  }catch(e){}
+}
+const jingle = () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => blip(f, .14, .06), i * 110));
+ 
+/* ================================================================
+   5) NAVIGATION
+   ================================================================ */
+const screens = [...document.querySelectorAll('.screen')];
+function show(id){
+  screens.forEach(s => s.classList.toggle('is-active', s.id === id));
+  scrollTo({ top: 0, behavior: 'smooth' });
+}
+ 
+/* ================================================================
+   6) ÉCRAN 1 : le "No" qui s'échappe
+   ================================================================ */
+const choice  = document.getElementById('choice');
+const yesWrap = document.getElementById('yesWrap');
+const noWrap  = document.getElementById('noWrap');
+const btnYes  = document.getElementById('btnYes');
+const btnNo   = document.getElementById('btnNo');
+const taunt   = document.getElementById('taunt');
+const catAsk  = document.getElementById('catAsk');
+ 
+document.getElementById('qText').textContent = CONFIG.question;
+ 
+let dodges = 0, yesScale = 1, noScale = 1;
+const moods = ['idle', 'worry', 'sad', 'cry', 'cry'];
+ 
+function dodge(e){
+  if (e) e.preventDefault();
+  dodges++;
+ 
+  yesScale = Math.min(CONFIG.maxYes, 1 + dodges * .22);
+  noScale  = Math.max(.55, 1 - dodges * .08);
+  yesWrap.style.setProperty('--s', yesScale.toFixed(2));
+  noWrap.style.setProperty('--sn', noScale.toFixed(2));
+ 
+  catAsk.innerHTML = cat(moods[Math.min(dodges, moods.length - 1)]);
+ 
+  taunt.textContent = dodges <= CONFIG.taunts.length
+    ? CONFIG.taunts[dodges - 1]
+    : `Heart broken ${dodges}/3`;
+ 
+  const box = choice.getBoundingClientRect();
+  const nb  = noWrap.getBoundingClientRect();
+  const yb  = yesWrap.getBoundingClientRect();
+  const padX = nb.width / 2 + 6, padY = nb.height / 2 + 6;
+  let x, y, tries = 0;
+  do{
+    x = padX + Math.random() * Math.max(1, box.width  - padX * 2);
+    y = padY + Math.random() * Math.max(1, box.height - padY * 2);
+    tries++;
+  } while (tries < 30 &&
+           Math.hypot(box.left + x - (yb.left + yb.width / 2),
+                      box.top  + y - (yb.top  + yb.height / 2)) < yb.width / 2 + nb.width / 2 + 10);
+ 
+  noWrap.style.left = x + 'px';
+  noWrap.style.top  = y + 'px';
+  blip(220 + Math.random() * 60, .06, .04, 'triangle');
+}
+ 
+btnNo.addEventListener('pointerdown', dodge);
+btnNo.addEventListener('mouseenter', dodge);
+btnNo.addEventListener('click', e => e.preventDefault());
+ 
+btnYes.addEventListener('click', () => {
+  jingle();
+  rain(46);
+  show('screen-yay');
+});
+ 
+/* ================================================================
+   7) PLUIE DE CŒURS
+   ================================================================ */
+const rainBox = document.getElementById('rain');
+const HEART_COLORS = ['#ff4b93', '#ffffff', '#ff9ecb', '#c02058'];
+function rain(n){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (let i = 0; i < n; i++){
+    const size = 12 + Math.random() * 18;
+    const el = heartEl(HEART_COLORS[i % HEART_COLORS.length], size);
+    el.classList.add('drop');
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.setProperty('--rot', (Math.random() * 120 - 60) + 'deg');
+    el.style.animationDuration = (2.4 + Math.random() * 2.6) + 's';
+    el.style.animationDelay = (Math.random() * 1.2) + 's';
+    el.style.opacity = .85;
+    rainBox.appendChild(el);
+    setTimeout(() => el.remove(), 6500);
+  }
+}
+ 
+for (let i = 0; i < 7; i++){
+  const el = heartEl(i % 2 ? '#ff5fa8' : '#ffffff', 12 + (i % 3) * 5);
+  el.classList.add('float');
+  el.style.left = (6 + Math.random() * 86) + 'vw';
+  el.style.top  = (12 + Math.random() * 62) + 'vh';
+  el.style.animationDelay = (Math.random() * 3) + 's';
+  el.style.position = 'fixed';
+  el.style.zIndex = 1;
+  el.style.opacity = .5;
+  document.body.appendChild(el);
+}
+ 
+/* ================================================================
+   8) ÉCRAN 3 : la date
+   ================================================================ */
+const dateInput = document.getElementById('dateInput');
+const toPlan    = document.getElementById('toPlan');
+const today     = new Date();
+dateInput.min   = today.toISOString().slice(0, 10);
+ 
+document.getElementById('toDate').addEventListener('click', () => { blip(880); show('screen-date'); });
+ 
+dateInput.addEventListener('change', () => {
+  toPlan.disabled = !dateInput.value;
+  blip(760, .07);
+});
+toPlan.addEventListener('click', () => { blip(880); show('screen-plan'); });
+ 
+/* ================================================================
+   9) ÉCRAN 4 : l'activité et envoi automatique
+   ================================================================ */
+const optionsBox = document.getElementById('options');
+const lockIn     = document.getElementById('lockIn');
+let picked = null;
+ 
+CONFIG.activities.forEach(label => {
+  const b = document.createElement('button');
+  b.className = 'opt';
+  b.type = 'button';
+  b.textContent = label;
+  b.addEventListener('click', () => {
+    picked = label;
+    [...optionsBox.children].forEach(c => c.classList.toggle('is-picked', c === b));
+    lockIn.disabled = false;
+    blip(700, .06);
+  });
+  optionsBox.appendChild(b);
+});
+ 
+lockIn.addEventListener('click', () => {
+  const selectedDate = dateInput.value;
+
+  // Transmission automatique vers Google Apps Script
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      date: selectedDate,
+      activity: picked
+    })
+  });
+
+  const d = new Date(dateInput.value + 'T12:00:00');
+  document.getElementById('tWhen').textContent = d.toLocaleDateString(CONFIG.locale, {
+    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+  }).toUpperCase();
+  document.getElementById('tWhat').textContent = picked;
+  document.getElementById('tWho').textContent  = CONFIG.you + ' + ' + CONFIG.me;
+  jingle(); rain(60);
+  show('screen-final');
+});
+ 
+/* ================================================================
+   10) ÉCRAN 5 : Ajouter au calendrier local / copier / recommencer
+   ================================================================ */
+const addCalendarBtn = document.getElementById('addCalendar');
+addCalendarBtn.addEventListener('click', () => {
+  if (!dateInput.value) return;
+
+  const rawDate = dateInput.value; 
+  const cleanDate = rawDate.replace(/-/g, ''); 
+  
+  const start = `${cleanDate}T190000`;
+  const end   = `${cleanDate}T220000`;
+
+  const title = `Rendez-vous : ${picked || 'Notre Date'}`;
+  const details = `Date prévue avec ${CONFIG.you} et ${CONFIG.me} !\nActivité : ${picked}`;
+
+  const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${start}/${end}&details=${encodeURIComponent(details)}`;
+  window.open(gcalUrl, '_blank');
+
+  const icsData = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//OurDate//FR',
+    'BEGIN:VEVENT',
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${details}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'rendez-vous.ics';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  blip(980, .1);
+});
+
+const copyBtn = document.getElementById('copyPlan');
+copyBtn.addEventListener('click', async () => {
+  const txt = `On a une date ! 💗
+WHEN : ${document.getElementById('tWhen').textContent}
+WHAT : ${document.getElementById('tWhat').textContent}
+WHO  : ${document.getElementById('tWho').textContent}`;
+  try{
+    await navigator.clipboard.writeText(txt);
+    copyBtn.querySelector('span').textContent = 'COPIED!';
+  }catch(e){
+    copyBtn.querySelector('span').textContent = 'PRESS & HOLD ON THE TICKET';
+  }
+  setTimeout(() => copyBtn.querySelector('span').textContent = 'COPY THE PLAN', 2200);
+  blip(980, .1);
+});
+ 
+document.getElementById('again').addEventListener('click', () => {
+  dodges = 0; yesScale = 1; noScale = 1; picked = null;
+  yesWrap.style.setProperty('--s', 1);
+  noWrap.style.setProperty('--sn', 1);
+  noWrap.style.left = '76%'; noWrap.style.top = '52%';
+  taunt.textContent = '';
+  catAsk.innerHTML = cat('idle');
+  dateInput.value = ''; toPlan.disabled = true;
+  lockIn.disabled = true;
+  [...optionsBox.children].forEach(c => c.classList.remove('is-picked'));
+  show('screen-ask');
+});
+</script>
+</body>
+</html>
